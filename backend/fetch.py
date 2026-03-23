@@ -1,9 +1,10 @@
 from pymongo import MongoClient
 from datetime import date
-import sysimport os 
+import sys
+import os 
+sys.path.append("../")
 
-
-from ../database.mongodb import fetch_item
+from database import userdb
 
 database = MongoClient("mongodb://localhost:27017")["lost_and_found"]
 items = database['Items']
