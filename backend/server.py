@@ -1,12 +1,15 @@
 from fastapi import FastAPI, Response
 from pydantic import BaseModel
-from database import usersdb
-from backend import auth
 from datetime import datetime, timedelta, UTC
 from jose import jwt
-import sys
+import sys, os
+import dotenv
+dotenv.load_dotenv()
 
 sys.path.append("../")
+
+from database import usersdb, itemsdb
+from backend import auth, otpmail
 
 app = FastAPI()
 
@@ -22,7 +25,7 @@ class Login(BaseModel):
     phone: int | None = None
     password_hash: str
 
-SECRET = "FoundItSecretKey"
+SECRET = os.environ.get("SECRET")
 
 def generate_JWT(username):
     payload = {
@@ -45,6 +48,7 @@ def signup(body: SignUp,response: Response):
         
     token = generate_JWT(body.username)
     response.set_cookie(key="token", token=token)
+
 
 @app.post('/login')
 def login(body: Login,response: Response):

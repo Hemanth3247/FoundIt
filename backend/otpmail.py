@@ -2,7 +2,10 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import secrets
+import dotenv
+import os
 
+dotenv.load_dotenv()
 
 def sendotp(email):
     def generate_otp():
@@ -10,7 +13,7 @@ def sendotp(email):
 
     otp = generate_otp()
     sender_email = "boomerang3247@gmail.com"
-    password ="cxhbujuvhajjnxwh"
+    password =os.environ.get("PASSWORD")
 
     try:
         with smtplib.SMTP("smtp.gmail.com",587) as server:
