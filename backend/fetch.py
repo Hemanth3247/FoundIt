@@ -4,12 +4,8 @@ import sys
 import os 
 sys.path.append("../")
 
-from database import userdb
+from database import userdb as udb
 
 database = MongoClient("mongodb://localhost:27017")["lost_and_found"]
 items = database['Items']
-
-
-
-response = fetch_item(160220260004)
-print(response)
+users = database['Users']
