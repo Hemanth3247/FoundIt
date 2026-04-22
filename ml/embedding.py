@@ -22,16 +22,3 @@ def get_embedding(img_path):
         emb = model(img)
     
     return emb.flatten()
-
-def compare(img1, img2):
-    emb1 = get_embedding(img1)
-    emb2 = get_embedding(img2)
-    
-    similarity = F.cosine_similarity(emb1, emb2, dim=0)
-    return similarity.item()
-
-image1 = input("Enter path for first image: ")
-image2 = input("Enter path for second image: ")
-similarity_score = compare(image1, image2)
-# score = compare("iphone1.jpg", "iphone2.jpg")
-print("Similarity:", similarity_score)
