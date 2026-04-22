@@ -21,17 +21,11 @@ def get_embedding(img_path):
     with torch.no_grad():
         emb = model(img)
     
-    return emb.flatten()
+    return (emb.flatten()).tolist()
 
-def compare(img1, img2):
-    emb1 = get_embedding(img1)
-    emb2 = get_embedding(img2)
+def compare(list1, list2):
+    emb1 = torch.tensor(list1)
+    emb2 = torch.tensor(list2)
     
     similarity = F.cosine_similarity(emb1, emb2, dim=0)
     return similarity.item()
-
-image1 = input("Enter path for first image: ")
-image2 = input("Enter path for second image: ")
-similarity_score = compare(image1, image2)
-# score = compare("iphone1.jpg", "iphone2.jpg")
-print("Similarity:", similarity_score)

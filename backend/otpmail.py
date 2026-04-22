@@ -12,8 +12,8 @@ def sendotp(email):
         return secrets.randbelow(900000)+100000
 
     otp = generate_otp()
-    sender_email = "boomerang3247@gmail.com"
-    password =os.environ.get("PASSWORD")
+    sender_email = "2024meb1399@iitrpr.ac.in"
+    password =os.environ.get("EMAIL_PASSWORD")
 
     try:
         with smtplib.SMTP("smtp.gmail.com",587) as server:
@@ -25,7 +25,7 @@ def sendotp(email):
             msg["Subject"] = "OTP to login your FoundIt Account"
 
             msg.attach(MIMEText("Your OTP for the FoundIt Account is","plain"))
-            msg.attach(MIMEText(f"<h1>{otp}</h1>","html"))
+            msg.attach(MIMEText(f"<button style=\"background-color: #0077B6; border-radius: 5px; padding: 10px; color: white; border: none\">{otp}</button>","html"))
             server.sendmail(sender_email,email,msg.as_string())
             print("Sent")
             server.quit()
@@ -34,5 +34,3 @@ def sendotp(email):
         print(e)
     
     return otp
-
-print(sendotp("boomerang3247@gmail.com"))
