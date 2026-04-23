@@ -261,7 +261,7 @@ select.finput { cursor: pointer; }
 
 .otp-wrap { display: flex; gap: 10px; margin-bottom: 18px; }
 .otp-cell {
-  flex: 1; height: 52px; border: 1px solid var(--border-md);
+  width: 45px; height: 52px; border: 1px solid var(--border-md);
   border-radius: var(--radius-sm); background: var(--bg-2);
   font-family: var(--font-display); font-size: 20px; font-weight: 700;
   text-align: center; outline: none; color: var(--text);

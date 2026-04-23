@@ -1,3 +1,11 @@
+function api(path,data) {
+  return fetch(process.env.API_BASE_URL + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+}
+
 const state = {
   currentUser: null,
   postType: 'lost',
@@ -173,6 +181,21 @@ function checkExistingMatches() {
 }
 
 /* ────────── Auth ────────── */
+async function sha256(text) {
+  const bytes = new TextEncoder().encode(text);
+
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    bytes
+  );
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  return hashArray
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function handleSignup() {
   const collegeid = document.getElementById('signup-collegeid').value.trim();
   const email     = document.getElementById('signup-email').value.trim();
@@ -181,7 +204,9 @@ function handleSignup() {
   if (!collegeid || !email || !pass) { showToast('Please fill all fields'); return; }
   if (pass !== conf)   { showToast("Passwords don't match"); return; }
   if (pass.length < 8) { showToast('Password must be at least 8 characters'); return; }
-  state.pendingSignup = { collegeid, email };
+  passhash = sha256(pass);
+  state.pendingSignup = { collegeid, email, passhash };
+  res = api("/signup/start", { "collegeid": collegeid, "email": email, "password_hash": passhash });
   showPage('page-otp');
   showToast('Code sent to ' + email);
 }
@@ -197,13 +222,26 @@ function verifyOtp() {
   const { email, collegeid } = state.pendingSignup;
   const raw = email.split('@')[0].replace(/[^a-zA-Z]/g, '');
   state.currentUser = { name: raw.charAt(0).toUpperCase() + raw.slice(1), email, collegeid, phone: '' };
-  showToast('Account created');
-  showPage('page-home');
-  renderFeed('all');
-  setTimeout(checkExistingMatches, 1200);
+  res = api("/signup/verify", { "email": email, "otp": val });
+  data = res.json()
+  if (data.is_verified) {
+    showToast('Account created');
+    showPage('page-home');
+    renderFeed('all');
+    setTimeout(checkExistingMatches, 1200);
+  }
+  else {
+    showToast('Incorrect code, please try again');
+    return;
+  }
 }
 
-function resendOtp() { showToast('Code resent'); }
+function resendOtp() { 
+  const { collegeid, email, passhash } = state.pendingSignup;
+  res = api("/signup/resend", { "collegeid": collegeid, "email": email, "password_hash": passhash });
+  showPage('page-otp');
+  showToast('Code sent to ' + email);
+}
 
 function handleLogin() {
   const email = document.getElementById('login-email').value.trim();

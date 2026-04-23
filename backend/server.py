@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, UploadFile, File, Form
 from pydantic import BaseModel
 from datetime import datetime, timedelta, UTC
 from jose import jwt
@@ -9,6 +9,7 @@ sys.path.append("../")
 
 from database import usersdb, itemsdb, pendingusersdb
 from backend import auth, otpmail
+from ml import vectormodel
 
 app = FastAPI()
 
@@ -21,7 +22,7 @@ class SignUp(BaseModel):
 class Login(BaseModel):
     
     email: str | None = None
-    password_hash: str
+    password_hash: str    
 
 SECRET = os.environ.get("JWT_SECRET")
 
@@ -72,7 +73,7 @@ def verifyotp(body: SignUp,response: Response):
 
     user = pendingusersdb.fetch_user(doc)
 
-    if user:
+    if user['timestamp'] < datetime.now(UTC) - timedelta(minutes=10):
         jwttoken = generate_JWT(user['collegeid'])
         usersdb.add_user(
             collegeid = user['collegeid'],
@@ -83,14 +84,19 @@ def verifyotp(body: SignUp,response: Response):
         )
         response.set_cookie(key="token", token=jwttoken)
         return {
-            collegeid = user['collegeid'],
-            email = user['email'], 
-            password_hash = user['password_hash'],
-            jwt_token = jwttoken,
             is_verified = True
         }
     else:
-        return "Incorrect OTP"
+        return {
+            is_verified = False,
+        }
+
+@app.post('/signup/resend')
+def resendotp(body: SignUp):
+    user = pendingusersdb.fetch_user({"email": body.email})
+    if user:    
+     otp = otpmail.sendotp(body.email)
+        return "OTP sent"
 
 @app.post('/login')
 def login(body: Login,response: Response):
@@ -109,15 +115,19 @@ def login(body: Login,response: Response):
         return "Incorrect Credentials"
     
 @app.post('/additem')
-def additem( name, description, category, image_url, type, location, date, userid , username, usermail, userphone, status):
+def additem( 
+    name: str = Form(), description: str = Form(), category: str = Form(), image: UploadFile = File(), type: str = Form(), location: str = Form(), date: str = Form(), userid: str = Form(), username: str = Form(), usermail: str = Form(), userphone: str = Form(), status: str = Form()):
+
+    vec = vectormodel.get_embedding(image.file)
+    image_url = imagecloud.upload_image(image.file)
     itemsdb.add_item(
-         name, description, category, image_url, type, location, date, userid , username, usermail, userphone, status
+         name=name, description=description, category=category, image_url=image_url, type=type, location=location, date=date, userid=userid , username=username, usermail=usermail, userphone=userphone, status=status, vector=vec
     )
 
 
 @app.post('/fetchitem')
-def fetchitem(id):
-    response = itemsdb.fetch_item({"id":id})
+def fetchitem(doc):
+    response = itemsdb.fetch_item(doc)
     return response
 
 
