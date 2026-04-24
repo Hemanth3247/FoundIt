@@ -69,7 +69,7 @@
   </section>
 
   <footer class="landing-footer">
-    <div>
+    <div style="vertical-align: centre; margin-left: 40%; margin-top: 15px">
       &copy; 2026 FoundIt. All Rights Reserved.      
     </div>
   </footer>
@@ -366,7 +366,7 @@
                 <span>No conversation selected</span>
               </div>
             </div>
-            <div class="chat-input-bar" id="chat-input-bar" style="display:none">
+            <div class="chat-input-bar" id="chat-input-bar">
               <input class="chat-field" id="chat-input" type="text" placeholder="Message…" onkeydown="if(event.key==='Enter')sendMsg()">
               <button class="chat-send-btn" onclick="sendMsg()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor"/></svg>
@@ -464,6 +464,17 @@
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- LOADER OVERLAY -->
+<div id="loader-overlay">
+  <div class="loader-ring">
+    <div class="orbit-dot d1"></div>
+    <div class="orbit-dot d2"></div>
+    <div class="orbit-dot d3"></div>
+    <div class="orbit-core"></div>
+  </div>
+  <div class="loader-label">FoundIt</div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

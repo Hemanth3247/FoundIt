@@ -3,7 +3,7 @@ from datetime  import datetime
 import hashlib
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 database = MongoClient(os.getenv("MONGODB_URL"))["lost_and_found"]
 pendingusers = database['pendingusers']
@@ -11,8 +11,9 @@ pendingusers = database['pendingusers']
 def add_user( collegeid, email, password_hash, otp, timestamp):
 
     dt = datetime.now().isoformat().encode('utf-8')
-
     userid = (hashlib.sha256(dt)).hexdigest()
+
+    pendingusers.delete_many({'email': email})
     doc = {
         '_id': userid,
         'collegeid': collegeid,
@@ -21,7 +22,6 @@ def add_user( collegeid, email, password_hash, otp, timestamp):
         'otp': otp,
         'timestamp': timestamp
     }
-
     response = pendingusers.insert_one(doc)
     return str(response.inserted_id)
 
@@ -29,6 +29,3 @@ def fetch_user(doc):
 
     response = pendingusers.find_one(doc)
     return response
-
-
-print(add_user(collegeid="20261001", email="john@example.com", password_hash="hashed_password", otp="123456", timestamp=datetime.now().isoformat()))

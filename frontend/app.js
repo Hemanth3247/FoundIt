@@ -1,5 +1,17 @@
+function showLoader() {
+  const el = document.getElementById('loader-overlay');
+  el.style.display = 'flex';
+  requestAnimationFrame(() => el.classList.add('active'));
+}
+function hideLoader() {
+  const el = document.getElementById('loader-overlay');
+  el.classList.remove('active');
+  setTimeout(() => { el.style.display = 'none'; }, 220);
+}
+
 function api(path,data) {
-  return fetch(process.env.API_BASE_URL + path, {
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  return fetch(baseUrl + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -12,29 +24,11 @@ const state = {
   activeChat: null,
   uploadedImageData: null,
   pendingSignup: null,
-  nextId: 20,
   theme: 'dark',
   notifications: [],
   notifOpen: false,
-  items: [
-    { id:1, name:'Black Leather Wallet', desc:'Contains student ID, two bank cards, and some cash. Black bifold leather with a small embossed logo on the front.', category:'Accessories', imageData:null, type:'lost', location:'Library, 2nd Floor', lostdate:'2024-01-15', userid:2, username:'Priya Sharma', usermail:'priya@college.edu', userphone:'9876543210', status:'active' },
-    { id:2, name:'AirPods Pro (White)', desc:'White AirPods Pro with charging case. Small scratch on lid. Initials "RM" in marker inside the case.', category:'Electronics', imageData:null, type:'found', location:'Cafeteria, window seats', lostdate:'2024-01-16', userid:3, username:'Rahul Mehta', usermail:'rahul@college.edu', userphone:'9812345678', status:'active' },
-    { id:3, name:'Student ID Card', desc:'Student ID card with name and photo. Found near the staircase in Block B.', category:'Documents', imageData:null, type:'lost', location:'Block B Corridor', lostdate:'2024-01-14', userid:4, username:'Sneha Kapoor', usermail:'sneha@college.edu', userphone:'9823456789', status:'active' },
-    { id:4, name:'Blue Umbrella', desc:'Large blue umbrella with a wooden curved handle. Initials "MK" in black marker on the handle.', category:'Other', imageData:null, type:'found', location:'Main Gate, Security Desk', lostdate:'2024-01-17', userid:5, username:'Mohan Kumar', usermail:'mohan@college.edu', userphone:'9834567890', status:'active' },
-    { id:5, name:'Casio FX-991EX', desc:'Casio scientific calculator. Owner\'s name on the back in pen. Slightly faded display protector.', category:'Stationery', imageData:null, type:'lost', location:'Block C, Lab 304', lostdate:'2024-01-13', userid:6, username:'Aisha Patel', usermail:'aisha@college.edu', userphone:'9845678901', status:'active' },
-    { id:6, name:'Bunch of Keys', desc:'4-5 keys on a red keychain with a small cat charm. One key is gold, rest silver.', category:'Keys', imageData:null, type:'found', location:'Girls Hostel Entrance', lostdate:'2024-01-16', userid:7, username:'Deepak Singh', usermail:'deepak@college.edu', userphone:'9856789012', status:'resolved' },
-  ],
-  chats: {
-    2: { name:'Priya Sharma', item:'Black Leather Wallet', messages:[
-      { from:'them', text:'Hi, I think I spotted something like that near the library. Can you describe it more?', time:'10:32 AM' },
-      { from:'me',   text:'Black bifold leather, small embossed logo on the front cover.', time:'10:34 AM' },
-      { from:'them', text:'Yes that sounds right! Come to the library whenever you\'re free.', time:'10:36 AM' }
-    ]},
-    3: { name:'Rahul Mehta', item:'AirPods Pro', messages:[
-      { from:'me',   text:'Hi, are those AirPods still with you?', time:'2:10 PM' },
-      { from:'them', text:'Yes! I\'m in the cafeteria till 4pm.', time:'2:15 PM' }
-    ]},
-  }
+  items: [],
+  chats: {}
 };
 
 const catIcons = { Electronics:'⚡', Accessories:'👝', Documents:'📄', Clothing:'👕', Stationery:'✏️', Keys:'🔑', Other:'📦' };
@@ -51,8 +45,8 @@ function switchTab(tab, el) {
   document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   el.classList.add('active');
-  if (tab === 'feed')     renderFeed('all');
-  if (tab === 'messages') renderConvList();
+  if (tab === 'feed')     loadFeed();
+  if (tab === 'messages') loadConversations();
   if (tab === 'account')  renderAccount();
 }
 
@@ -127,7 +121,7 @@ function renderNotifPanel() {
 function closeNotifAndOpen(id) {
   state.notifOpen = false;
   document.getElementById('notif-panel').classList.remove('open');
-  openItem(id);
+  openItem(String(id));
 }
 
 /* ────────── AI matching ────────── */
@@ -204,11 +198,19 @@ function handleSignup() {
   if (!collegeid || !email || !pass) { showToast('Please fill all fields'); return; }
   if (pass !== conf)   { showToast("Passwords don't match"); return; }
   if (pass.length < 8) { showToast('Password must be at least 8 characters'); return; }
-  passhash = sha256(pass);
-  state.pendingSignup = { collegeid, email, passhash };
-  res = api("/signup/start", { "collegeid": collegeid, "email": email, "password_hash": passhash });
-  showPage('page-otp');
-  showToast('Code sent to ' + email);
+  sha256(pass).then(passhash => {
+    state.pendingSignup = { collegeid, email, passhash };
+    showLoader();
+    api("/signup/start", { "collegeid": collegeid, "email": email, "password_hash": passhash }).then(res => res.json()).then(data => {
+      hideLoader();
+      showPage('page-otp');
+      showToast('Code sent to ' + email);
+    }).catch(err => {
+      hideLoader();
+      showToast('Error sending OTP');
+      console.error(err);
+    });
+  });
 }
 
 function otpMove(el, idx) {
@@ -219,40 +221,70 @@ function otpMove(el, idx) {
 function verifyOtp() {
   const val = Array.from(document.querySelectorAll('.otp-cell')).map(i => i.value).join('');
   if (val.length < 6) { showToast('Enter the full 6-digit code'); return; }
-  const { email, collegeid } = state.pendingSignup;
+  const { email, collegeid, passhash } = state.pendingSignup;
   const raw = email.split('@')[0].replace(/[^a-zA-Z]/g, '');
   state.currentUser = { name: raw.charAt(0).toUpperCase() + raw.slice(1), email, collegeid, phone: '' };
-  res = api("/signup/verify", { "email": email, "otp": val });
-  data = res.json()
-  if (data.is_verified) {
-    showToast('Account created');
-    showPage('page-home');
-    renderFeed('all');
-    setTimeout(checkExistingMatches, 1200);
-  }
-  else {
-    showToast('Incorrect code, please try again');
-    return;
-  }
+  showLoader();
+  api("/signup/verify", { "email": email, "otp": val, "collegeid": collegeid, "password_hash": passhash }).then(res => res.json()).then(data => {
+    hideLoader();
+    if (data.is_verified) {
+      showToast('Account created');
+      showPage('page-home');
+      loadFeed();
+      setTimeout(checkExistingMatches, 1200);
+    }
+    else {
+      showToast('Incorrect code, please try again');
+    }
+  }).catch(err => {
+    hideLoader();
+    showToast('Error verifying OTP');
+    console.error(err);
+  });
 }
 
 function resendOtp() { 
   const { collegeid, email, passhash } = state.pendingSignup;
-  res = api("/signup/resend", { "collegeid": collegeid, "email": email, "password_hash": passhash });
-  showPage('page-otp');
-  showToast('Code sent to ' + email);
+  showLoader();
+  api("/signup/resend", { "collegeid": collegeid, "email": email, "password_hash": passhash }).then(res => res.json()).then(data => {
+    hideLoader();
+    showToast('Code sent to ' + email);
+  }).catch(err => {
+    hideLoader();
+    showToast('Error resending OTP');
+    console.error(err);
+  });
 }
 
 function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-password').value;
   if (!email || !pass) { showToast('Please fill all fields'); return; }
-  const raw = email.split('@')[0].replace(/[^a-zA-Z]/g, '');
-  state.currentUser = { name: raw.charAt(0).toUpperCase() + raw.slice(1), email, collegeid: '22BCE0000', phone: '' };
-  showToast('Signed in');
-  showPage('page-home');
-  renderFeed('all');
-  setTimeout(checkExistingMatches, 1200);
+  sha256(pass).then(passhash => {
+    showLoader();
+    api('/login', { email, password_hash: passhash })
+      .then(r => r.json())
+      .then(data => {
+        hideLoader();
+        if (data.success && data.user) {
+          const u = data.user;
+          const raw = email.split('@')[0].replace(/[^a-zA-Z]/g, '');
+          state.currentUser = {
+            name: raw.charAt(0).toUpperCase() + raw.slice(1),
+            email: u.email,
+            collegeid: u.collegeid,
+            phone: ''
+          };
+          showToast('Signed in');
+          showPage('page-home');
+          loadFeed();
+          setTimeout(checkExistingMatches, 1200);
+        } else {
+          showToast(data.message || 'Incorrect credentials');
+        }
+      })
+      .catch(() => { hideLoader(); showToast('Login failed'); });
+  });
 }
 
 function handleForgot() {
@@ -262,7 +294,57 @@ function handleForgot() {
   setTimeout(() => showPage('page-login'), 1500);
 }
 
+/* ────────── AI match polling ────────── */
+function pollMatches(userid) {
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  fetch(`${baseUrl}/matches/${userid}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.matches && data.matches.length) {
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        data.matches.forEach(m => {
+          const conf = Math.round(m.score * 100);
+          addNotification({
+            lostId: m.matched_item_id,
+            title: `AI match for "${m.new_item_name}"`,
+            body: `<strong>${conf}% visual match</strong> with <strong>"${m.matched_item_name}"</strong> at ${m.matched_item_location}.`,
+            time: now
+          });
+        });
+        showToast(`AI found ${data.matches.length} match${data.matches.length > 1 ? 'es' : ''}!`);
+      }
+    })
+    .catch(() => {});
+}
+
 /* ────────── Feed ────────── */
+function loadFeed() {
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  fetch(baseUrl + '/items')
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.items.length) {
+        state.items = data.items.map(item => ({
+          id: item._id,
+          name: item.item_name,
+          desc: item.item_description,
+          category: item.item_category,
+          imageData: item.image_url || null,
+          type: item.type,
+          location: item.location,
+          lostdate: item.date,
+          userid: item.userid,
+          username: item.usercollegeid,
+          usermail: item.usermail,
+          userphone: item.userphone || '',
+          status: item.status
+        }));
+      }
+      renderFeed('all');
+    })
+    .catch(() => renderFeed('all'));
+}
+
 function renderFeed(filter) {
   const grid = document.getElementById('feed-grid');
   let items = state.items.slice();
@@ -276,7 +358,7 @@ function renderFeed(filter) {
   grid.innerHTML = items.map(item => {
     const hasMatch = state.notifications.some(n => n.lostId === item.id);
     return `
-    <div class="item-card${hasMatch ? ' has-match' : ''}" onclick="openItem(${item.id})">
+    <div class="item-card${hasMatch ? ' has-match' : ''}" onclick="openItem('${item.id}')">
       ${hasMatch ? '<div class="match-chip">AI match found</div>' : ''}
       <div class="item-card-img">
         ${item.imageData
@@ -292,7 +374,7 @@ function renderFeed(filter) {
       </div>
       <div class="item-card-foot">
         <span class="item-card-user">${item.username}</span>
-        <button class="item-card-msg-btn" onclick="event.stopPropagation();goChat(${item.userid},'${esc(item.name)}','${esc(item.username)}')">Message</button>
+        <button class="item-card-msg-btn" onclick="event.stopPropagation();goChat('${item.userid}','${item.id}','${esc(item.name)}','${esc(item.username)}')">Message</button>
       </div>
     </div>`;
   }).join('');
@@ -306,7 +388,7 @@ function filterFeed(f, el) {
 
 /* ────────── Item modal ────────── */
 function openItem(id) {
-  const item = state.items.find(i => i.id === id);
+  const item = state.items.find(i => String(i.id) === String(id));
   if (!item) return;
   state.modalItem = item;
   const typeEl = document.getElementById('m-type');
@@ -335,18 +417,40 @@ function openChatFromModal() {
   const item = state.modalItem;
   if (!item) return;
   closeModal();
-  goChat(item.userid, item.name, item.username);
+  goChat(item.userid, item.id, item.name, item.username);
 }
 
 /* ────────── Chat ────────── */
-function goChat(userId, itemName, userName) {
-  if (!state.chats[userId]) state.chats[userId] = { name: userName, item: itemName, messages: [] };
+let _msgPollTimer = null;
+
+function goChat(receiverId, itemId, itemName, userName) {
+  const key = `${receiverId}_${itemId}`;
+  if (!state.chats[key]) state.chats[key] = { receiverId, itemId, name: userName, item: itemName, messages: [] };
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-messages').classList.add('active');
   document.querySelector('[data-tab="messages"]').classList.add('active');
-  renderConvList();
-  selectConv(userId);
+  loadConversations();
+  selectConv(key);
+}
+
+function loadConversations() {
+  if (!state.currentUser) return;
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  fetch(`${baseUrl}/conversations/${state.currentUser.collegeid}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        data.conversations.forEach(c => {
+          const key = `${c.other_user_id}_${c.item_id}`;
+          if (!state.chats[key]) {
+            state.chats[key] = { receiverId: c.other_user_id, itemId: c.item_id, name: c.other_user_id, item: c.item_id, messages: [] };
+          }
+          state.chats[key].lastMsg = c.last_message;
+        });
+        renderConvList();
+      }
+    }).catch(() => {});
 }
 
 function renderConvList() {
@@ -356,22 +460,50 @@ function renderConvList() {
     list.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--text-3)">No conversations yet</div>';
     return;
   }
-  list.innerHTML = entries.map(([uid, c]) => `
-    <div class="conv-row ${state.activeChat == uid ? 'active' : ''}" onclick="selectConv(${uid})">
+  list.innerHTML = entries.map(([key, c]) => `
+    <div class="conv-row ${state.activeChat === key ? 'active' : ''}" onclick="selectConv('${key}')">
       <div class="conv-row-name">${c.name}</div>
-      <div class="conv-row-preview">${c.messages.length ? c.messages[c.messages.length-1].text : 're: ' + c.item}</div>
+      <div class="conv-row-preview">${c.lastMsg || 're: ' + c.item}</div>
     </div>
   `).join('');
 }
 
-function selectConv(userId) {
-  state.activeChat = userId;
-  const c = state.chats[userId];
+function selectConv(key) {
+  const c = state.chats[key];
+  if (!c) return;
+  state.activeChat = key;
   document.getElementById('chat-topbar').innerHTML = `
     <div>
       <div class="chat-topbar-name">${c.name}</div>
       <div class="chat-topbar-item">re: ${c.item}</div>
     </div>`;
+  renderConvList();
+  fetchMessages(key);
+  clearInterval(_msgPollTimer);
+  _msgPollTimer = setInterval(() => fetchMessages(key), 4000);
+}
+
+function fetchMessages(key) {
+  if (!state.currentUser) return;
+  const c = state.chats[key];
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const myId = state.currentUser.collegeid;
+  fetch(`${baseUrl}/messages/${myId}/${c.receiverId}/${c.itemId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        state.chats[key].messages = data.messages.map(m => ({
+          from: m.sender_id === myId ? 'me' : 'them',
+          text: m.text,
+          time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+        renderChatFeed(key);
+      }
+    }).catch(() => {});
+}
+
+function renderChatFeed(key) {
+  const c = state.chats[key];
   const feed = document.getElementById('chat-feed');
   if (!c.messages.length) {
     feed.innerHTML = '<div class="chat-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Start the conversation</span></div>';
@@ -382,24 +514,28 @@ function selectConv(userId) {
       </div>`).join('');
     feed.scrollTop = feed.scrollHeight;
   }
-  document.getElementById('chat-input-bar').style.display = 'flex';
-  renderConvList();
 }
 
 function sendMsg() {
   const input = document.getElementById('chat-input');
   const text  = input.value.trim();
-  if (!text || !state.activeChat) return;
-  const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  state.chats[state.activeChat].messages.push({ from:'me', text, time });
+  if (!text) return;
+  if (!state.currentUser) { showToast('Please sign in to send messages'); return; }
+  if (!state.activeChat) return;
+  const c = state.chats[state.activeChat];
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const formData = new FormData();
+  formData.append('sender_id', state.currentUser.collegeid);
+  formData.append('receiver_id', c.receiverId);
+  formData.append('item_id', c.itemId);
+  formData.append('text', text);
   input.value = '';
-  selectConv(state.activeChat);
-  setTimeout(() => {
-    const replies = ['Got it, thanks!', 'Sure, when can we meet?', 'Sounds good.', 'Let me check and get back to you.', 'Yes, still with me!'];
-    const t = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    state.chats[state.activeChat].messages.push({ from:'them', text: replies[Math.floor(Math.random() * replies.length)], time: t });
-    selectConv(state.activeChat);
-  }, 700 + Math.random() * 800);
+  fetch(`${baseUrl}/messages/send`, { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) fetchMessages(state.activeChat);
+      else showToast('Send failed: ' + (data.message || 'unknown error'));
+    }).catch(err => { showToast('Message error: ' + err.message); });
 }
 
 /* ────────── Post form ────────── */
@@ -441,18 +577,47 @@ function submitPost() {
   const date     = document.getElementById('p-date').value;
   const username = document.getElementById('p-username').value.trim();
   const phone    = document.getElementById('p-phone').value.trim();
+  const fileInput = document.getElementById('file-input');
   if (!name || !desc || !category || !location || !date || !username) { showToast('Please fill all required fields'); return; }
-  const user = state.currentUser || { email: 'user@college.edu' };
-  const newItem = { id: state.nextId++, name, desc, category, imageData: state.uploadedImageData, type: state.postType, location, lostdate: date, userid: 1, username, usermail: user.email, userphone: phone, status: 'active' };
-  state.items.unshift(newItem);
-  state.uploadedImageData = null;
-  document.getElementById('upload-preview').style.display = 'none';
-  document.getElementById('upload-prompt').style.display  = 'flex';
-  ['p-name','p-desc','p-location','p-date','p-username','p-phone'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('p-category').value = '';
-  document.getElementById('file-input').value = '';
-  showToast('Post published');
-  setTimeout(() => runAIMatch(newItem), 1500);
+  if (!fileInput.files[0]) { showToast('Please upload a photo'); return; }
+
+  const user = state.currentUser || { email: 'user@college.edu', collegeid: 'unknown' };
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('description', desc);
+  formData.append('category', category);
+  formData.append('image', fileInput.files[0]);
+  formData.append('type', state.postType);
+  formData.append('location', location);
+  formData.append('date', date);
+  formData.append('userid', user.collegeid || 'unknown');
+  formData.append('usercollegeid', user.collegeid || 'unknown');
+  formData.append('usermail', user.email);
+  formData.append('userphone', phone);
+  formData.append('status', 'active');
+
+  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  showLoader();
+  fetch(baseUrl + '/additem', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+      hideLoader();
+      if (data.success) {
+        state.uploadedImageData = null;
+        document.getElementById('upload-preview').style.display = 'none';
+        document.getElementById('upload-prompt').style.display  = 'flex';
+        ['p-name','p-desc','p-location','p-date','p-username','p-phone'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('p-category').value = '';
+        fileInput.value = '';
+        showToast('Post published — AI matching running...');
+        loadFeed();
+        const postedBy = (state.currentUser && state.currentUser.collegeid) || 'unknown';
+        setTimeout(() => pollMatches(postedBy), 4000);
+      } else {
+        showToast(data.message || 'Failed to post item');
+      }
+    })
+    .catch(err => { hideLoader(); showToast('Error posting item'); console.error(err); });
 }
 
 /* ────────── Account ────────── */
@@ -465,7 +630,7 @@ function renderAccount() {
   document.getElementById('acc-id').textContent     = user.collegeid;
   document.getElementById('edit-name').value  = user.name;
   document.getElementById('edit-phone').value = user.phone || '';
-  const mine = state.items.filter(i => i.userid === 1);
+  const mine = state.items.filter(i => i.userid === user.collegeid);
   document.getElementById('my-posts-list').innerHTML = mine.length
     ? mine.map(i => `<div class="mypost-row"><span class="mypost-name">${i.name}</span><span class="tag ${i.type}-tag" style="font-size:10px">${i.type}</span></div>`).join('')
     : '<div style="font-size:12px;color:var(--text-3);padding:4px 0">No posts yet</div>';

@@ -25,7 +25,7 @@ def sendotp(email):
             msg["Subject"] = "OTP to login your FoundIt Account"
 
             msg.attach(MIMEText("Your OTP for the FoundIt Account is","plain"))
-            msg.attach(MIMEText(f"<button style=\"background-color: #0077B6; border-radius: 5px; padding: 10px; color: white; border: none\">{otp}</button>","html"))
+            msg.attach(MIMEText(f"<div><button style=\"background-color: #0077B6; border-radius: 5px; padding: 10px; color: white; border: none\">{otp}</button></div>","html"))
             server.sendmail(sender_email,email,msg.as_string())
             print("Sent")
             server.quit()

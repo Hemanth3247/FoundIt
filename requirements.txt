@@ -1,4 +1,12 @@
 pymongo
 python-dotenv
-jose
+PyJWT
 pydantic
+fastapi
+uvicorn
+python-multipart
+pydantic-settings
+torch
+torchvision
+pillow
+cloudinary

@@ -223,7 +223,7 @@ select.finput { cursor: pointer; }
 .preview-meta { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
 
 .landing-footer {
-  position: relative; z-index: 2; border-top: 1px solid var(--border); margin-top: auto;
+  position: relative; z-index: 2; border-top: 1px solid var(--border); margin-top: auto; height: 50px; text-align: centre;
   background: linear-gradient(to top, rgba(124,106,247,0.03), transparent);
 }
 .footer-stats { max-width: 1160px; margin: 0 auto; padding: 32px 28px; display: flex; align-items: center; gap: 36px; }
@@ -590,4 +590,86 @@ body.light .modal-overlay { background: rgba(20,10,40,0.45); }
   .account-page { padding: 18px; }
   .footer-stats { gap: 22px; flex-wrap: wrap; }
   .auth-box { padding: 26px 20px; }
+}
+
+/* ── Loader overlay ─────────────────────────────────────── */
+#loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(8, 8, 16, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: all;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+#loader-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+
+.loader-ring {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+.orbit-core {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  animation: core-pulse 1.6s ease-in-out infinite;
+}
+@keyframes core-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.5; }
+}
+.orbit-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  margin: -3.5px;
+}
+.orbit-dot.d1 {
+  background: var(--accent);
+  animation: orbit1 1.4s linear infinite;
+}
+.orbit-dot.d2 {
+  background: var(--accent2);
+  animation: orbit1 1.4s linear infinite;
+  animation-delay: -0.47s;
+}
+.orbit-dot.d3 {
+  background: var(--found);
+  animation: orbit1 1.4s linear infinite;
+  animation-delay: -0.94s;
+}
+@keyframes orbit1 {
+  0%   { transform: rotate(0deg)   translateX(24px) scale(1);   opacity: 1; }
+  50%  { transform: rotate(180deg) translateX(24px) scale(0.6); opacity: 0.45; }
+  100% { transform: rotate(360deg) translateX(24px) scale(1);   opacity: 1; }
+}
+.loader-label {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  animation: label-flicker 1.6s ease-in-out infinite;
+}
+@keyframes label-flicker {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
 }
