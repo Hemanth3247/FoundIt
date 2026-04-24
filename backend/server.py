@@ -11,7 +11,6 @@ load_dotenv()
 from database import usersdb, itemsdb, pendingusersdb, messagesdb
 from database.connection import db as _db
 import auth, otpmail, imagecloud
-from ml import vectormodel
 
 app = FastAPI()
 
@@ -136,6 +135,7 @@ def login(body: Login, response: Response):
         return {"success": False, "message": "Incorrect password"}
     
 def run_ai_matching(vec, item_type, item_name, userid):
+    from ml import vectormodel
     try:
         db = _db
         opposite_type = 'found' if item_type == 'lost' else 'lost'
