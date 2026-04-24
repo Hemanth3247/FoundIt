@@ -175,6 +175,7 @@ def additem(background_tasks: BackgroundTasks,
             date: str = Form(), userid: str = Form(), usercollegeid: str = Form(),
             usermail: str = Form(), userphone: str = Form(''), status: str = Form()):
     try:
+        from ml import vectormodel
         import tempfile
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp:
             contents = image.file.read()
