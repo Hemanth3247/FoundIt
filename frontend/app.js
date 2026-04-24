@@ -45,8 +45,11 @@ function showPage(id) {
 function switchTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mob-link').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   el.classList.add('active');
+  const mob = document.querySelector(`.mob-link[data-tab="${tab}"]`);
+  if (mob) mob.classList.add('active');
   clearInterval(_convPollTimer);
   if (tab === 'feed')     loadFeed();
   if (tab === 'messages') {

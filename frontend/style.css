@@ -571,6 +571,9 @@ body.light .modal-overlay { background: rgba(20,10,40,0.45); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
 
+/* ── Mobile bottom nav ──────────────────────────────────── */
+.mobile-nav { display: none; }
+
 @media (max-width: 860px) {
   .hero-section { flex-direction: column; padding: 70px 20px 48px; }
   .hero-cards-preview { flex-direction: row; overflow-x: auto; padding-top: 0; }
@@ -578,7 +581,7 @@ body.light .modal-overlay { background: rgba(20,10,40,0.45); }
   .pc2,.pc3 { margin-left: 0; }
   .topbar-inner { padding: 0 18px; }
   .sidebar { display: none; }
-  .app-main { margin-left: 0; max-width: 100%; }
+  .app-main { margin-left: 0; max-width: 100%; padding-bottom: 68px; }
   .messages-frame { grid-template-columns: 1fr; }
   .conv-list { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; }
   .form-grid { grid-template-columns: 1fr; }
@@ -590,6 +593,28 @@ body.light .modal-overlay { background: rgba(20,10,40,0.45); }
   .account-page { padding: 18px; }
   .footer-stats { gap: 22px; flex-wrap: wrap; }
   .auth-box { padding: 26px 20px; }
+
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 50;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mob-link {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; background: none; border: none; cursor: pointer;
+    color: var(--text-3); font-family: var(--font); font-size: 10px; font-weight: 500;
+    padding: 6px 16px; border-radius: var(--radius-sm);
+    transition: color var(--t);
+    flex: 1;
+  }
+  .mob-link:hover, .mob-link.active { color: var(--accent2); }
 }
 
 /* ── Loader overlay ─────────────────────────────────────── */
