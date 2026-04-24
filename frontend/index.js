@@ -19,7 +19,10 @@ app.get('/config.js', (req, res) => {
   res.send(`window.API_BASE_URL = '${process.env.API_URL || 'http://localhost:8000'}';`);
 });
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+  const call = fetch(`${process.env.API_URL || 'http://localhost:8000'}/api/health`).catch(() => {});
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`FoundIt running → http://localhost:${PORT}`));
