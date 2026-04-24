@@ -14,15 +14,23 @@ app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(__dirname));
 
+async function callbackend() {
+
+  base = process.env.API_URL+'/health' || 'http://localhost:8000';
+  const call = await fetch(`${base}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Frontend is alive!' })
+  });
+}
+
 app.get('/config.js', (req, res) => {
   res.type('application/javascript');
   res.send(`window.API_BASE_URL = '${process.env.API_URL || 'http://localhost:8000'}';`);
+  callbackend();
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-  const call = fetch(`${process.env.API_URL || 'http://localhost:8000'}/api/health`).catch(() => {});
-});
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`FoundIt running → http://localhost:${PORT}`));
