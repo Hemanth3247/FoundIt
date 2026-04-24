@@ -16,12 +16,14 @@ app.use(express.static(__dirname));
 
 async function callbackend() {
 
-  base = process.env.API_URL+'/health' || 'http://localhost:8000';
-  const call = await fetch(`${base}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Frontend is alive!' })
-  });
+  const base = process.env.API_URL || 'http://localhost:8000';
+  try {
+    await fetch(`${base}/health`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Frontend is alive!' })
+    });
+  } catch (e) {}  
 }
 
 app.get('/config.js', (req, res) => {
@@ -30,7 +32,7 @@ app.get('/config.js', (req, res) => {
   callbackend();
 });
 
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`FoundIt running → http://localhost:${PORT}`));
