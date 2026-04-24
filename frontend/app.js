@@ -47,8 +47,12 @@ function switchTab(tab, el) {
   document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   el.classList.add('active');
+  clearInterval(_convPollTimer);
   if (tab === 'feed')     loadFeed();
-  if (tab === 'messages') loadConversations();
+  if (tab === 'messages') {
+    loadConversations();
+    _convPollTimer = setInterval(loadConversations, 4000);
+  }
   if (tab === 'account')  renderAccount();
 }
 
@@ -424,6 +428,7 @@ function openChatFromModal() {
 
 /* ────────── Chat ────────── */
 let _msgPollTimer = null;
+let _convPollTimer = null;
 
 function goChat(receiverId, itemId, itemName, userName) {
   const key = `${receiverId}_${itemId}`;
@@ -451,6 +456,9 @@ function loadConversations() {
           state.chats[key].lastMsg = c.last_message;
         });
         renderConvList();
+        if (!state.activeChat && Object.keys(state.chats).length > 0) {
+          selectConv(Object.keys(state.chats)[0]);
+        }
       }
     }).catch(() => {});
 }

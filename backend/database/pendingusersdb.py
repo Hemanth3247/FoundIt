@@ -1,18 +1,12 @@
-from pymongo import MongoClient
-from datetime  import datetime
+from datetime import datetime
 import hashlib
-import os
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+from database.connection import db
 
-database = MongoClient(os.getenv("MONGODB_URL"))["lost_and_found"]
-pendingusers = database['pendingusers']
+pendingusers = db['pendingusers']
 
-def add_user( collegeid, email, password_hash, otp, timestamp):
-
+def add_user(collegeid, email, password_hash, otp, timestamp):
     dt = datetime.now().isoformat().encode('utf-8')
-    userid = (hashlib.sha256(dt)).hexdigest()
-
+    userid = hashlib.sha256(dt).hexdigest()
     pendingusers.delete_many({'email': email})
     doc = {
         '_id': userid,
@@ -22,10 +16,7 @@ def add_user( collegeid, email, password_hash, otp, timestamp):
         'otp': otp,
         'timestamp': timestamp
     }
-    response = pendingusers.insert_one(doc)
-    return str(response.inserted_id)
+    return str(pendingusers.insert_one(doc).inserted_id)
 
 def fetch_user(doc):
-
-    response = pendingusers.find_one(doc)
-    return response
+    return pendingusers.find_one(doc)

@@ -1,4 +1,5 @@
 pymongo
+certifi
 python-dotenv
 PyJWT
 pydantic

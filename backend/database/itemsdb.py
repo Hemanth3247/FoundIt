@@ -1,14 +1,8 @@
-from pymongo import MongoClient
-from datetime import date
-from dotenv import load_dotenv
-import os
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+from database.connection import db
 
-database = MongoClient(os.getenv("MONGODB_URL"))["lost_and_found"]
-items = database['items']
+items = db['items']
 
-def add_item( name, description, category, image_url, typeof, location, lostdate, userid , usercollegeid, usermail, status, vector):
-
+def add_item(name, description, category, image_url, typeof, location, lostdate, userid, usercollegeid, usermail, status, vector):
     doc = {
         "item_name": name,
         "item_description": description,
@@ -23,12 +17,7 @@ def add_item( name, description, category, image_url, typeof, location, lostdate
         "status": status,
         "vector": vector
     }
-
-    response = items.insert_one(doc)
-    return str(response.inserted_id)
+    return str(items.insert_one(doc).inserted_id)
 
 def fetch_item(doc):
-
-    response = items.find_one(doc)
-    return response
-
+    return items.find_one(doc)

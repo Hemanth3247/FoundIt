@@ -4,10 +4,12 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta, UTC
 import jwt
 import os
+import certifi
 from dotenv import load_dotenv
 load_dotenv()
 
 from database import usersdb, itemsdb, pendingusersdb, messagesdb
+from database.connection import db as _db
 import auth, otpmail, imagecloud
 from ml import vectormodel
 
@@ -135,8 +137,7 @@ def login(body: Login, response: Response):
     
 def run_ai_matching(vec, item_type, item_name, userid):
     try:
-        from pymongo import MongoClient
-        db = MongoClient(os.environ.get("MONGODB_URL"))["lost_and_found"]
+        db = _db
         opposite_type = 'found' if item_type == 'lost' else 'lost'
         candidates = list(db['items'].find({"type": opposite_type, "status": "active", "vector": {"$exists": True}}))
 
@@ -199,8 +200,7 @@ def additem(background_tasks: BackgroundTasks,
 def get_all_items():
     """Get all active items (lost and found)"""
     try:
-        from pymongo import MongoClient
-        database = MongoClient(os.environ.get("MONGODB_URL"))["lost_and_found"]
+        database = _db
         items_collection = database['items']
         items = list(items_collection.find({"status": "active"}).sort("date", -1).limit(50))
         # Convert ObjectId to string for JSON serialization
@@ -214,8 +214,7 @@ def get_all_items():
 def get_items_by_type(item_type: str):
     """Get items by type (lost or found)"""
     try:
-        from pymongo import MongoClient
-        database = MongoClient(os.environ.get("MONGODB_URL"))["lost_and_found"]
+        database = _db
         items_collection = database['items']
         items = list(items_collection.find({"type": item_type, "status": "active"}).sort("date", -1).limit(50))
         for item in items:
@@ -239,8 +238,7 @@ def get_item(item_id: int):
 @app.get('/matches/{userid}')
 def get_matches(userid: str):
     try:
-        from pymongo import MongoClient
-        db = MongoClient(os.environ.get("MONGODB_URL"))["lost_and_found"]
+        db = _db
         unseen = list(db['matches'].find({"userid": userid, "seen": False}))
         for m in unseen:
             m['_id'] = str(m['_id'])
