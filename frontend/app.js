@@ -1,3 +1,5 @@
+const API_BASE = window.API_BASE_URL || 'http://localhost:8000';
+
 function showLoader() {
   const el = document.getElementById('loader-overlay');
   el.style.display = 'flex';
@@ -10,7 +12,7 @@ function hideLoader() {
 }
 
 function api(path,data) {
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   return fetch(baseUrl + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -296,7 +298,7 @@ function handleForgot() {
 
 /* ────────── AI match polling ────────── */
 function pollMatches(userid) {
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   fetch(`${baseUrl}/matches/${userid}`)
     .then(res => res.json())
     .then(data => {
@@ -319,7 +321,7 @@ function pollMatches(userid) {
 
 /* ────────── Feed ────────── */
 function loadFeed() {
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   fetch(baseUrl + '/items')
     .then(res => res.json())
     .then(data => {
@@ -436,7 +438,7 @@ function goChat(receiverId, itemId, itemName, userName) {
 
 function loadConversations() {
   if (!state.currentUser) return;
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   fetch(`${baseUrl}/conversations/${state.currentUser.collegeid}`)
     .then(r => r.json())
     .then(data => {
@@ -486,7 +488,7 @@ function selectConv(key) {
 function fetchMessages(key) {
   if (!state.currentUser) return;
   const c = state.chats[key];
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   const myId = state.currentUser.collegeid;
   fetch(`${baseUrl}/messages/${myId}/${c.receiverId}/${c.itemId}`)
     .then(r => r.json())
@@ -523,7 +525,7 @@ function sendMsg() {
   if (!state.currentUser) { showToast('Please sign in to send messages'); return; }
   if (!state.activeChat) return;
   const c = state.chats[state.activeChat];
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   const formData = new FormData();
   formData.append('sender_id', state.currentUser.collegeid);
   formData.append('receiver_id', c.receiverId);
@@ -596,7 +598,7 @@ function submitPost() {
   formData.append('userphone', phone);
   formData.append('status', 'active');
 
-  const baseUrl = window.API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE;
   showLoader();
   fetch(baseUrl + '/additem', { method: 'POST', body: formData })
     .then(res => res.json())
@@ -663,4 +665,12 @@ function showToast(msg) {
 document.addEventListener('DOMContentLoaded', () => {
   const d = document.getElementById('p-date');
   if (d) d.valueAsDate = new Date();
+});
+
+Object.assign(window, {
+  showPage, switchTab, toggleTheme, toggleNotifPanel, clearNotifs,
+  closeNotifAndOpen, filterFeed, openItem, closeBgModal, closeModal,
+  openChatFromModal, goChat, sendMsg, setPostType, handleFileSelect,
+  dragOver, dragLeave, dropFile, submitPost, handleSignup, otpMove,
+  verifyOtp, resendOtp, handleLogin, handleForgot, saveProfile, showToast
 });

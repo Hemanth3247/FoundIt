@@ -3,8 +3,6 @@ import cloudinary.uploader
 import os
 from dotenv import load_dotenv
 load_dotenv()
-import sys
-sys.path.append("../")
 
 cloudinary.config(
     cloud_name = os.getenv("CLOUDINARY_NAME"),
@@ -15,4 +13,4 @@ cloudinary.config(
 
 def upload_image(image_path):
     response = cloudinary.uploader.upload(image_path)
-    return response['secure_url']
+    return response['secure_url']   

@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append("../")
-
 from database import usersdb
 
 def authenticate(doc, passhash):
@@ -13,3 +9,4 @@ def authenticate(doc, passhash):
         return True
     else:
         return False
+print(1)

@@ -1,9 +1,7 @@
 from pymongo import MongoClient
 from datetime import date
-import sys
 import os
 from dotenv import load_dotenv
-sys.path.append("../")
 
 load_dotenv()
 

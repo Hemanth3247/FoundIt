@@ -3,13 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timedelta, UTC
 import jwt
-import sys, os
+import os
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
-sys.path.append("../")
+load_dotenv()
 
 from database import usersdb, itemsdb, pendingusersdb, messagesdb
-from backend import auth, otpmail, imagecloud
+import auth, otpmail, imagecloud
 from ml import vectormodel
 
 app = FastAPI()
