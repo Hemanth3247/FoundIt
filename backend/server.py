@@ -306,6 +306,38 @@ def debug_user(email: str):
         "has_password_hash": bool(user.get('password_hash'))
     }
 
+@app.get('/user-items/{userid}')
+def get_user_items(userid: str):
+    try:
+        items = list(_db['items'].find({"userid": userid}).sort("date", -1))
+        for item in items:
+            item['_id'] = str(item['_id'])
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@app.post('/items/{item_id}/resolve')
+def resolve_item(item_id: str, status: str = Form()):
+    try:
+        from bson import ObjectId
+        item = _db['items'].find_one({"_id": ObjectId(item_id)})
+        if not item:
+            return {"success": False, "message": "Item not found"}
+        _db['items'].update_one({"_id": ObjectId(item_id)}, {"$set": {"status": status}})
+        if status == 'returned':
+            usersdb.increment_karma(item.get('userid', ''), 5)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@app.get('/karma/{collegeid}')
+def get_karma(collegeid: str):
+    try:
+        karma = usersdb.get_karma(collegeid)
+        return {"success": True, "karma": karma}
+    except Exception as e:
+        return {"success": False, "karma": 0}
+
 @app.get('/health')
 def health_check():
     """Health check endpoint"""

@@ -20,3 +20,10 @@ def add_user(collegeid, email, password_hash, jwt_token=None, is_verified=False)
 
 def fetch_user(doc):
     return users.find_one(doc)
+
+def increment_karma(collegeid, points):
+    users.update_one({"collegeid": collegeid}, {"$inc": {"karma": points}})
+
+def get_karma(collegeid):
+    user = users.find_one({"collegeid": collegeid}, {"karma": 1})
+    return int(user.get("karma", 0)) if user else 0

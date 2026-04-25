@@ -30,10 +30,20 @@ const state = {
   notifications: [],
   notifOpen: false,
   items: [],
-  chats: {}
+  chats: {},
+  myPosts: [],
+  karma: 0
 };
 
 const catIcons = { Electronics:'⚡', Accessories:'👝', Documents:'📄', Clothing:'👕', Stationery:'✏️', Keys:'🔑', Other:'📦' };
+
+const KARMA_RANKS = [
+  { name: 'Newcomer',        min: 0,   max: 9,        color: '#55556a' },
+  { name: 'Helper',          min: 10,  max: 24,       color: '#a78bfa' },
+  { name: 'Good Samaritan',  min: 25,  max: 49,       color: '#2dd4a0' },
+  { name: 'Campus Guardian', min: 50,  max: 99,       color: '#f59e0b' },
+  { name: 'Campus Hero',     min: 100, max: Infinity, color: '#ff5f70' },
+];
 
 /* ────────── Page routing ────────── */
 function showPage(id) {
@@ -643,10 +653,8 @@ function renderAccount() {
   document.getElementById('acc-id').textContent     = user.collegeid;
   document.getElementById('edit-name').value  = user.name;
   document.getElementById('edit-phone').value = user.phone || '';
-  const mine = state.items.filter(i => i.userid === user.collegeid);
-  document.getElementById('my-posts-list').innerHTML = mine.length
-    ? mine.map(i => `<div class="mypost-row"><span class="mypost-name">${i.name}</span><span class="tag ${i.type}-tag" style="font-size:10px">${i.type}</span></div>`).join('')
-    : '<div style="font-size:12px;color:var(--text-3);padding:4px 0">No posts yet</div>';
+  loadMyPosts();
+  loadKarma();
 }
 
 function saveProfile() {
@@ -656,6 +664,105 @@ function saveProfile() {
   if (state.currentUser) { state.currentUser.name = name; state.currentUser.phone = phone; }
   renderAccount();
   showToast('Saved');
+}
+
+/* ────────── My posts ────────── */
+function loadMyPosts() {
+  if (!state.currentUser) return;
+  fetch(`${API_BASE}/user-items/${state.currentUser.collegeid}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        state.myPosts = data.items.map(item => ({
+          id: item._id,
+          name: item.item_name,
+          type: item.type,
+          status: item.status,
+          location: item.location,
+        }));
+        renderMyPosts();
+      }
+    }).catch(() => {});
+}
+
+function renderMyPosts() {
+  const list = document.getElementById('my-posts-list');
+  if (!state.myPosts.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:4px 0">No posts yet</div>';
+    return;
+  }
+  list.innerHTML = state.myPosts.map(i => `
+    <div class="mypost-row">
+      <div class="mypost-info">
+        <span class="mypost-name">${i.name}</span>
+        <span class="tag ${i.type}-tag" style="font-size:10px">${i.type}</span>
+      </div>
+      <div class="mypost-actions">
+        <span class="status-pill ${i.status === 'active' ? 'pill-active' : 'pill-returned'}">${i.status}</span>
+        ${i.status === 'active' ? `<button class="resolve-btn" onclick="resolveItem('${i.id}')">Mark returned</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function resolveItem(itemId) {
+  showLoader();
+  const form = new FormData();
+  form.append('status', 'returned');
+  fetch(`${API_BASE}/items/${itemId}/resolve`, { method: 'POST', body: form })
+    .then(r => r.json())
+    .then(data => {
+      hideLoader();
+      if (data.success) {
+        showToast('Marked as returned · +5 karma');
+        loadMyPosts();
+        loadFeed();
+        loadKarma();
+      } else {
+        showToast('Failed to update');
+      }
+    }).catch(() => { hideLoader(); showToast('Error updating status'); });
+}
+
+/* ────────── Karma ────────── */
+function loadKarma() {
+  if (!state.currentUser) return;
+  fetch(`${API_BASE}/karma/${state.currentUser.collegeid}`)
+    .then(r => r.json())
+    .then(data => { state.karma = data.karma || 0; renderKarma(state.karma); })
+    .catch(() => renderKarma(0));
+}
+
+function renderKarma(pts) {
+  const scoreEl    = document.getElementById('karma-score');
+  const rankEl     = document.getElementById('karma-rank');
+  const fillEl     = document.getElementById('karma-bar-fill');
+  const progressEl = document.getElementById('karma-progress-label');
+  const nextEl     = document.getElementById('karma-next-label');
+  if (!scoreEl) return;
+
+  const idx  = KARMA_RANKS.findIndex(r => pts >= r.min && pts <= r.max);
+  const rank = KARMA_RANKS[idx] || KARMA_RANKS[0];
+  const next = KARMA_RANKS[idx + 1];
+
+  scoreEl.textContent = pts;
+  rankEl.textContent  = rank.name;
+  rankEl.style.color       = rank.color;
+  rankEl.style.borderColor = rank.color + '44';
+  rankEl.style.background  = rank.color + '18';
+
+  if (next) {
+    const pct = ((pts - rank.min) / (next.min - rank.min)) * 100;
+    fillEl.style.width      = Math.min(pct, 100) + '%';
+    fillEl.style.background = `linear-gradient(90deg, ${rank.color}, ${next.color})`;
+    progressEl.textContent  = `${pts} / ${next.min}`;
+    nextEl.textContent      = `${next.min - pts} pts to ${next.name}`;
+  } else {
+    fillEl.style.width      = '100%';
+    fillEl.style.background = rank.color;
+    progressEl.textContent  = `${pts} pts`;
+    nextEl.textContent      = 'Max rank reached';
+  }
 }
 
 /* ────────── Helpers ────────── */
@@ -683,5 +790,6 @@ Object.assign(window, {
   closeNotifAndOpen, filterFeed, openItem, closeBgModal, closeModal,
   openChatFromModal, goChat, sendMsg, setPostType, handleFileSelect,
   dragOver, dragLeave, dropFile, submitPost, handleSignup, otpMove,
-  verifyOtp, resendOtp, handleLogin, handleForgot, saveProfile, showToast
+  verifyOtp, resendOtp, handleLogin, handleForgot, saveProfile, showToast,
+  resolveItem
 });

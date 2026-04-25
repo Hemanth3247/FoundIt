@@ -530,10 +530,21 @@ select.finput { cursor: pointer; }
 .acc-card:hover { border-color: var(--border-md); }
 .acc-card-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; }
 .acc-card .form-grid { margin-bottom: 0; }
-.mypost-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.mypost-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .mypost-row:last-child { border-bottom: none; }
-.mypost-name { font-size: 13px; font-weight: 500; color: var(--text); }
-.status-pill { font-family: var(--mono); font-size: 10px; color: var(--text-3); border: 1px solid var(--border); padding: 2px 8px; border-radius: var(--radius-xs); }
+.mypost-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mypost-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.mypost-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-pill { font-family: var(--mono); font-size: 10px; color: var(--text-3); border: 1px solid var(--border); padding: 2px 8px; border-radius: var(--radius-xs); white-space: nowrap; }
+.pill-active   { color: var(--found); border-color: rgba(45,212,160,0.3); background: var(--found-dim); }
+.pill-returned { color: var(--text-3); border-color: var(--border); }
+.resolve-btn {
+  background: none; border: 1px solid var(--border-md); border-radius: var(--radius-xs);
+  font-family: var(--font); font-size: 11px; font-weight: 500; color: var(--text-3);
+  padding: 3px 10px; cursor: pointer; white-space: nowrap;
+  transition: color var(--t), border-color var(--t), background var(--t);
+}
+.resolve-btn:hover { color: var(--found); border-color: rgba(45,212,160,0.4); background: var(--found-dim); }
 
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(4,4,12,0.78); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
 body.light .modal-overlay { background: rgba(20,10,40,0.45); }
@@ -649,4 +660,47 @@ body.light .modal-overlay { background: rgba(20,10,40,0.45); }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ── Karma card ─────────────────────────────────────────── */
+.karma-card {
+  background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-1) 100%);
+  border-color: var(--border-md);
+}
+.karma-display { display: flex; flex-direction: column; gap: 13px; }
+.karma-top { display: flex; align-items: center; justify-content: space-between; }
+.karma-score-wrap { display: flex; align-items: baseline; gap: 6px; }
+.karma-score {
+  font-family: var(--font-display);
+  font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.karma-pts-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.karma-rank-badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 5px 13px; border-radius: 100px; border: 1px solid;
+  transition: color var(--t), background var(--t), border-color var(--t);
+}
+.karma-bar-track {
+  height: 6px; border-radius: 3px;
+  background: var(--bg-3); overflow: hidden;
+}
+.karma-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.7s var(--ease);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.karma-bar-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+}
+.karma-hint {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: 0.03em; border-top: 1px solid var(--border); padding-top: 11px;
 }
