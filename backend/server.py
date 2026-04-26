@@ -199,7 +199,6 @@ def additem(background_tasks: BackgroundTasks,
 
 @app.get('/items')
 def get_all_items():
-    """Get all active items (lost and found)"""
     try:
         database = _db
         items_collection = database['items']
@@ -213,7 +212,6 @@ def get_all_items():
 
 @app.get('/items/{item_type}')
 def get_items_by_type(item_type: str):
-    """Get items by type (lost or found)"""
     try:
         database = _db
         items_collection = database['items']
@@ -226,7 +224,6 @@ def get_items_by_type(item_type: str):
 
 @app.get('/item/{item_id}')
 def get_item(item_id: int):
-    """Get a specific item by ID"""
     try:
         item = itemsdb.fetch_item({"_id": item_id})
         if item:
@@ -251,7 +248,6 @@ def get_matches(userid: str):
 
 @app.get('/user/{user_id}')
 def get_user(user_id: str):
-    """Get user details"""
     try:
         user = usersdb.fetch_user({"_id": user_id})
         if user:
@@ -285,7 +281,6 @@ def get_messages(sender_id: str, receiver_id: str, item_id: str):
 
 @app.get('/conversations/{user_id}')
 def get_conversations(user_id: str):
-    """Get all conversations for a user"""
     try:
         convs = messagesdb.get_user_conversations(user_id)
         return {"success": True, "conversations": convs}
@@ -294,7 +289,6 @@ def get_conversations(user_id: str):
 
 @app.get('/debug/user/{email:path}')
 def debug_user(email: str):
-    """Debug: check if user exists in DB (no password returned)"""
     user = usersdb.fetch_user({'email': email})
     if not user:
         return {"found": False, "email": email}
@@ -340,6 +334,5 @@ def get_karma(collegeid: str):
 
 @app.get('/health')
 def health_check():
-    """Health check endpoint"""
     return {"status": "ok", "message": "FoundIt API is running"}
 

@@ -45,7 +45,6 @@ const KARMA_RANKS = [
   { name: 'Campus Hero',     min: 100, max: Infinity, color: '#ff5f70' },
 ];
 
-/* ────────── Page routing ────────── */
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -69,7 +68,6 @@ function switchTab(tab, el) {
   if (tab === 'account')  renderAccount();
 }
 
-/* ────────── Theme ────────── */
 function toggleTheme() {
   state.theme = state.theme === 'dark' ? 'light' : 'dark';
   document.body.classList.toggle('light', state.theme === 'light');
@@ -77,7 +75,6 @@ function toggleTheme() {
   if (lbl) lbl.textContent = state.theme === 'dark' ? 'Light mode' : 'Dark mode';
 }
 
-/* ────────── Notifications ────────── */
 function toggleNotifPanel() {
   state.notifOpen = !state.notifOpen;
   document.getElementById('notif-panel').classList.toggle('open', state.notifOpen);
@@ -143,7 +140,6 @@ function closeNotifAndOpen(id) {
   openItem(String(id));
 }
 
-/* ────────── AI matching ────────── */
 function scoreMatch(a, b) {
   const keys = (a.name + ' ' + a.category).toLowerCase().split(/\s+/);
   const hay  = (b.name + ' ' + b.desc + ' ' + b.category).toLowerCase();
@@ -193,7 +189,6 @@ function checkExistingMatches() {
   renderNotifPanel();
 }
 
-/* ────────── Auth ────────── */
 async function sha256(text) {
   const bytes = new TextEncoder().encode(text);
 
@@ -313,7 +308,6 @@ function handleForgot() {
   setTimeout(() => showPage('page-login'), 1500);
 }
 
-/* ────────── AI match polling ────────── */
 function pollMatches(userid) {
   const baseUrl = API_BASE;
   fetch(`${baseUrl}/matches/${userid}`)
@@ -336,7 +330,6 @@ function pollMatches(userid) {
     .catch(() => {});
 }
 
-/* ────────── Feed ────────── */
 function loadFeed() {
   const baseUrl = API_BASE;
   fetch(baseUrl + '/items')
@@ -405,7 +398,6 @@ function filterFeed(f, el) {
   renderFeed(f);
 }
 
-/* ────────── Item modal ────────── */
 function openItem(id) {
   const item = state.items.find(i => String(i.id) === String(id));
   if (!item) return;
@@ -439,7 +431,6 @@ function openChatFromModal() {
   goChat(item.userid, item.id, item.name, item.username);
 }
 
-/* ────────── Chat ────────── */
 let _msgPollTimer = null;
 let _convPollTimer = null;
 
@@ -561,7 +552,6 @@ function sendMsg() {
     }).catch(err => { showToast('Message error: ' + err.message); });
 }
 
-/* ────────── Post form ────────── */
 function setPostType(type, el) {
   state.postType = type;
   document.querySelectorAll('.ttoggle').forEach(b => b.classList.remove('active'));
@@ -643,7 +633,6 @@ function submitPost() {
     .catch(err => { hideLoader(); showToast('Error posting item'); console.error(err); });
 }
 
-/* ────────── Account ────────── */
 function renderAccount() {
   const user = state.currentUser || { name:'John Doe', email:'john@college.edu', collegeid:'22BCE1234', phone:'' };
   const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
@@ -666,7 +655,6 @@ function saveProfile() {
   showToast('Saved');
 }
 
-/* ────────── My posts ────────── */
 function loadMyPosts() {
   if (!state.currentUser) return;
   fetch(`${API_BASE}/user-items/${state.currentUser.collegeid}`)
@@ -724,7 +712,6 @@ function resolveItem(itemId) {
     }).catch(() => { hideLoader(); showToast('Error updating status'); });
 }
 
-/* ────────── Karma ────────── */
 function loadKarma() {
   if (!state.currentUser) return;
   fetch(`${API_BASE}/karma/${state.currentUser.collegeid}`)
@@ -765,7 +752,6 @@ function renderKarma(pts) {
   }
 }
 
-/* ────────── Helpers ────────── */
 function fmtDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
