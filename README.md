@@ -1,6 +1,6 @@
 # FoundIt
 
-##[Visit the website](https://founditfrontend-ibx0.onrender.com/)
+[Visit the website](https://founditfrontend-ibx0.onrender.com/)
 ## AI-Powered Campus Lost & Found Platform
 
 FoundIt is a web-based Lost & Found platform designed for campus environments such as the Indian Institute of Technology Ropar. It provides a centralized system where users can report, search, match, claim, and recover lost items using AI-powered image matching and secure user interaction.
