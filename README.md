@@ -5,25 +5,6 @@
 
 FoundIt is a web-based Lost & Found platform designed for campus environments such as the Indian Institute of Technology Ropar. It provides a centralized system where users can report, search, match, claim, and recover lost items using AI-powered image matching and secure user interaction.
 
----
-
-## Table of Contents
-
-1. Overview  
-2. Features  
-3. Tech Stack  
-4. Project Structure  
-5. Installation & Setup  
-6. Frontend Setup  
-7. Backend Setup  
-8. Environment Variables  
-9. AI Matching Module  
-10. API Endpoints  
-11. Future Enhancements  
-12. License  
-
----
-
 ## Overview
 
 Traditional methods of managing lost and found items through WhatsApp groups, Telegram channels, or email bulletins are often unorganized and inefficient.
